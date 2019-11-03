@@ -23,6 +23,7 @@ class Parser(BaseParser):
         'file_input': tree.Module,
         'import_name': tree.ImportName,
         'import_from': tree.ImportFrom,
+        'import_from_starlark': tree.transformStarlarkImport,
         'break_stmt': tree.KeywordStatement,
         'continue_stmt': tree.KeywordStatement,
         'return_stmt': tree.ReturnStmt,

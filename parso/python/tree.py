@@ -911,6 +911,68 @@ class ImportFrom(Import):
             return [dotted]
         return [dotted + [name] for name, alias in self._as_name_tuples()]
 
+def _get_string_node_value(node):
+    string = node.value
+    string = string.strip('"')
+    string = string.split('.')[0]  # remove file extension
+    return string
+
+def transformStarlarkImport(starlarkChildren):
+    """Create a ImportFrom node by parsing the children of a ImportFromStarlark node.
+    This allows to reuse the ImportFrom implementation.
+
+    [<Keyword: load>, <Operator: (>, <String: "dir/file.py">, <Operator: ,>, PythonNode(starlark_imported_names, [<String: "func1">, <Operator: ,>, <String: "func2">]), <Operator: )>]
+    ->
+    [<Keyword: from>, PythonNode(dotted_name, [<Name: dir@1,5>, <Operator: .>, <Name: file@1,9>]), <Keyword: import>, PythonNode(import_as_names, [<Name: func1@1,21>, <Operator: ,>, <Name: func2@1,28>])]
+    """
+    mock_position = starlarkChildren[0].start_pos    # use mock position for now (important for autocomplete later)
+
+    # parse starlarkChildren to get import strings
+    starlark_from_node = starlarkChildren[2]
+    from_name = _get_string_node_value(starlark_from_node)
+    from_name = from_name.replace('/', '.')     # to python import syntax
+
+    starlark_imported_names_node = starlarkChildren[4]
+    starlark_imported_names_list = []
+    if starlark_imported_names_node.type == 'starlark_imported_names':
+        starlark_imported_names_list = starlark_imported_names_node.children
+    elif starlark_imported_names_node.type == 'string':
+        starlark_imported_names_list = [starlark_imported_names_node]
+
+    imported_names = []
+    for node in starlark_imported_names_list:
+        if node.type == 'string':
+            imported_names.append(_get_string_node_value(node))
+
+    # build children of ImportFrom node
+    from_node_list = []
+    for directory in from_name.split('.'):
+        from_node_list.append(Name(directory, mock_position))
+        from_node_list.append(Operator('.', mock_position))
+    if from_node_list:
+        from_node_list.pop()
+    from_node = PythonNode('dotted_name', from_node_list)
+
+    imported_names_list = []
+    for name in imported_names:
+        imported_names_list.append(Name(name, mock_position))
+        imported_names_list.append(Operator(',', mock_position))
+    if imported_names_list:
+        imported_names_list.pop()
+    imported_names_node = PythonNode('import_as_names', imported_names_list)
+
+    children = [Keyword('from', mock_position), from_node, Keyword('import', mock_position), imported_names_node]
+    importNode = ImportFrom(children)
+
+    for child in from_node.children:
+        child.parent = from_node
+    for child in imported_names_node.children:
+        child.parent = imported_names_node
+    for child in importNode.children:
+        child.parent = importNode
+
+    return importNode
+
 
 class ImportName(Import):
     """For ``import_name`` nodes. Covers normal imports without ``from``."""
