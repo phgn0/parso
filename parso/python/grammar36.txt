@@ -156,3 +156,6 @@ fstring_content: FSTRING_STRING | fstring_expr
 fstring_conversion: '!' NAME
 fstring_expr: '{' testlist_comp [ fstring_conversion ] [ fstring_format_spec ] '}'
 fstring_format_spec: ':' fstring_content*
+
+import_from_starlark: 'load' '(' STRING ',' starlark_imported_names ')'
+starlark_imported_names: STRING (',' STRING)*

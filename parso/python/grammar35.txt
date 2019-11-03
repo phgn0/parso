@@ -151,3 +151,6 @@ encoding_decl: NAME
 
 yield_expr: 'yield' [yield_arg]
 yield_arg: 'from' test | testlist
+
+import_from_starlark: 'load' '(' STRING ',' starlark_imported_names ')'
+starlark_imported_names: STRING (',' STRING)*

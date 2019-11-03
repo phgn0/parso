@@ -60,9 +60,9 @@ _RETURN_STMT_CONTAINERS = set(['suite', 'simple_stmt']) | _FLOW_CONTAINERS
 _FUNC_CONTAINERS = set(['suite', 'simple_stmt', 'decorated']) | _FLOW_CONTAINERS
 _GET_DEFINITION_TYPES = set([
     'expr_stmt', 'sync_comp_for', 'with_stmt', 'for_stmt', 'import_name',
-    'import_from', 'param'
+    'import_from', 'import_from_starlark', 'param'
 ])
-_IMPORTS = set(['import_name', 'import_from'])
+_IMPORTS = set(['import_name', 'import_from', 'import_from_starlark'])
 
 
 class DocstringMixin(object):
@@ -352,7 +352,7 @@ class Scope(PythonBaseNode, DocstringMixin):
         """
         Returns a generator of `import_name` and `import_from` nodes.
         """
-        return self._search_in_scope('import_name', 'import_from')
+        return self._search_in_scope('import_name', 'import_from', 'import_from_starlark')
 
     def _search_in_scope(self, *names):
         def scan(children):

@@ -139,7 +139,7 @@ dictorsetmaker: test ':' test (',' test ':' test)* [',']
 classdef: 'class' NAME ['(' [testlist] ')'] ':' suite
 
 arglist: (argument ',')* (argument [',']
-                         |'*' test (',' argument)* [',' '**' test] 
+                         |'*' test (',' argument)* [',' '**' test]
                          |'**' test)
 argument: test [gen_for] | test '=' test  # Really [keyword '='] test
 
@@ -157,3 +157,6 @@ testlist1: test (',' test)*
 encoding_decl: NAME
 
 yield_expr: 'yield' [testlist]
+
+import_from_starlark: 'load' '(' STRING ',' starlark_imported_names ')'
+starlark_imported_names: STRING (',' STRING)*

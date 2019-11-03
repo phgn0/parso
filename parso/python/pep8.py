@@ -6,7 +6,7 @@ from parso.normalizer import Rule
 from parso.python.tree import search_ancestor, Flow, Scope
 
 
-_IMPORT_TYPES = ('import_name', 'import_from')
+_IMPORT_TYPES = ('import_name', 'import_from', 'import_from_starlark')
 _SUITE_INTRODUCERS = ('classdef', 'funcdef', 'if_stmt', 'while_stmt',
                       'for_stmt', 'try_stmt', 'with_stmt')
 _NON_STAR_TYPES = ('term', 'import_from', 'power')
