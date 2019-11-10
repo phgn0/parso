@@ -1,0 +1,6 @@
+
+def CoolFunc():
+  """
+  docstring
+  """
+  pass

@@ -973,6 +973,95 @@ def transformStarlarkImport(starlarkChildren):
 
     return importNode
 
+class ImportFromStarlark(Import):
+    type = 'import_from'
+    __slots__ = ()
+
+    def get_defined_names(self, include_setitem=False):
+        """
+        Returns the a list of `Name` that the import defines. The
+        defined names are set after `import` or in case an alias - `as` - is
+        present that name is returned.
+        """
+        return [alias or name for name, alias in self._as_name_tuples()]
+
+    def _aliases(self):
+        """Mapping from alias to its corresponding name."""
+        return dict((alias, name) for name, alias in self._as_name_tuples()
+                    if alias is not None)
+
+    def _clean_string(self, string):
+        string = string.strip('"')
+        string = string.split('.')[0]  # remove file extension
+        return string
+
+    def get_from_names(self):
+        from_string = self.children[2]
+        from_string_val = self._clean_string(from_string.value)
+
+        modules = []
+        for directory in from_string_val.split('/'):
+            # TODO correct start pos
+            modules.append(Name(directory, from_string.start_pos))
+
+        return modules
+
+        # for n in self.children[2:]:
+        #     if n not in ('.', '...'):
+        #         break
+        # if n.type == 'dotted_name':  # from x.y import
+        #     return n.children[::2]
+        # elif n == 'import':  # from . import
+        #     return []
+        # else:  # from x import
+        #     return [n]
+
+    @property
+    def level(self):
+        """The level parameter of ``__import__``."""
+        level = 0
+        for n in self.children[1:]:
+            if n in ('.', '...'):
+                level += len(n.value)
+            else:
+                break
+        return level
+
+    def _as_name_tuples(self):
+        name_string = self.children[4]
+        name_string_val = self._clean_string(name_string.value)
+
+        name = Name(name_string_val, name_string.start_pos)
+
+        yield name, None
+        # last = self.children[-1]
+        # if last == ')':
+        #     last = self.children[-2]
+        # elif last == '*':
+        #     return  # No names defined directly.
+
+        # if last.type == 'import_as_names':
+        #     as_names = last.children[::2]
+        # else:
+        #     as_names = [last]
+        # for as_name in as_names:
+        #     if as_name.type == 'name':
+        #         yield as_name, None
+        #     else:
+        #         yield as_name.children[::2]  # yields x, y -> ``x as y``
+
+    def get_paths(self):
+        """
+        The import paths defined in an import statement. Typically an array
+        like this: ``[<Name: datetime>, <Name: date>]``.
+
+        :return list of list of Name:
+        """
+        dotted = self.get_from_names()
+
+        if self.children[-1] == '*':
+            return [dotted]
+        return [dotted + [name] for name, alias in self._as_name_tuples()]
 
 class ImportName(Import):
     """For ``import_name`` nodes. Covers normal imports without ``from``."""
